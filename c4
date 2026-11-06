@@ -1,0 +1,98 @@
+-- louknt
+local player = game:GetService("Players").LocalPlayer
+
+local c4 = Instance.new("Tool")
+c4.Name = "C4"
+
+local h = Instance.new("Part", c4)
+h.Name = "Handle"
+h.Size = Vector3.new(1.8, 0.8, 1.4)
+
+local m = Instance.new("SpecialMesh", h)
+m.MeshId = "http://www.roblox.com/asset/?id=104516854"
+m.TextureId = "http://www.roblox.com/asset/?id=104516981"
+m.Scale = Vector3.new(1.5, 1.5, 1.5)
+
+local detonator = Instance.new("Tool")
+detonator.Name = "Detonator"
+
+local dh = Instance.new("Part", detonator)
+dh.Name = "Handle"
+dh.Size = Vector3.new(1, 1, 1)
+
+local dm = Instance.new("SpecialMesh", dh)
+dm.MeshId = "http://www.roblox.com/asset/?id=28511792"
+dm.TextureId = "http://www.roblox.com/asset/?id=28511890"
+dm.Scale = Vector3.new(2, 2, 2)
+
+local c4s = {}
+c4.Activated:connect(function()
+	local m = player:GetMouse()
+	if not m.Target then return end
+	
+	local ts = Instance.new("Sound")
+	ts.SoundId = "rbxassetid://608600954"
+	ts.PlayOnRemove = true
+	ts.Parent = h
+	ts:Remove()
+	
+	local nc4 = h:Clone()
+	nc4.Name = "C4"
+	nc4.CanCollide = true
+	nc4.Position = m.hit.p + Vector3.new(0,1.5,0)
+	nc4.Parent = workspace
+	
+	local s = Instance.new("Sound")
+	s.SoundId = "http://www.roblox.com/asset/?id=340794986"
+	s.Parent = nc4
+	s:Play()
+	
+	table.insert(c4s, nc4)
+end)
+
+local using = false
+detonator.Activated:connect(function()
+	if #c4s == 0 or using then return end
+	using = true
+	
+	local beep = Instance.new("Sound")
+	beep.SoundId = "http://www.roblox.com/asset/?id=28518380"
+	beep.PlayOnRemove = true
+	beep.Parent = dh
+	beep:Remove()
+	
+	for i = 1, #c4s do
+		local thec4 = table.remove(c4s, 1)
+		if thec4 and thec4.Parent then
+			local boom = Instance.new("Sound")
+			boom.SoundId = "rbxasset://sounds/collide.wav"
+			boom.Parent = thec4
+			boom.Volume = 3
+			boom.PlayOnRemove = true
+			
+			local actualboom = Instance.new("Explosion")
+			actualboom.BlastRadius = 15
+			actualboom.Hit:connect(function(what)
+				if what.Size.X > 15 or 
+					what.Size.Y > 15 or 		
+					what.Size.Z > 15 then return end
+				
+				what.Anchored = false
+				what.BrickColor = BrickColor.Black()
+				what:breakJoints()
+				Instance.new("Fire", what)
+			end)
+			actualboom.Position = thec4.Position
+			actualboom.Parent = workspace
+			
+			thec4:Remove()
+			
+			wait(.3) -- for dramatic effect
+		end
+	end
+	
+	using = false
+end)
+
+c4.Parent = player.Backpack
+detonator.Parent = player.Backpack
